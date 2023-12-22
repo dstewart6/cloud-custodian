@@ -447,7 +447,64 @@ class TestSagemakerJob(BaseTest):
         client = session_factory(region="us-east-1").client("sagemaker")
         tags = client.list_tags(ResourceArn=resources[0]["TrainingJobArn"])["Tags"]
         self.assertEqual(len(tags), 0)
+    ######################################################################################################
 
+    def test_sagemaker_job_mark_for_op(self):
+        session_factory = self.replay_flight_data(
+            "test_sagemaker_job_mark_for_op"
+        )
+        p = self.load_policy(
+            {
+                "name": "sagemaker-job-mark-for-op-delete",
+                "resource": "sagemaker-job",
+                "filters": [
+                    {
+                        "type": "value",
+                        "key": "ProductionVariants[].InstanceType",
+                        "value": "ml.m4.xlarge",
+                        "op": "contains",
+                    }
+                ],
+                "actions": [
+                    {
+                        "type": "mark-for-op",
+                        "tag": "custodian_cleanup",
+                        "op": "delete",
+                        "days": 1,
+                    }
+                ],
+            },
+            session_factory=session_factory,
+        )
+        resources = p.run()
+        self.assertEqual(len(resources), 1)
+        client = session_factory(region="us-east-1").client("sagemaker")
+        tags = client.list_tags(ResourceArn=resources[0]["EndpointConfigArn"])["Tags"]
+        self.assertTrue(tags[0], "custodian_cleanup")
+
+    def test_sagemaker_endpoint_config_marked_for_op(self):
+        session_factory = self.replay_flight_data(
+            "test_sagemaker_endpoint_config_marked_for_op"
+        )
+        p = self.load_policy(
+            {
+                "name": "marked-failed-endpoint-config-delete",
+                "resource": "sagemaker-endpoint-config",
+                "filters": [
+                    {
+                        "type": "marked-for-op",
+                        "tag": "custodian_cleanup",
+                        "op": "delete",
+                        "skew": 1,
+                    }
+                ],
+            },
+            session_factory=session_factory,
+        )
+        resources = p.run()
+        self.assertEqual(len(resources), 1)
+    
+    ######################################################################################################
 
 class TestSagemakerTransformJob(BaseTest):
 
