@@ -447,10 +447,11 @@ class TestSagemakerJob(BaseTest):
         client = session_factory(region="us-east-1").client("sagemaker")
         tags = client.list_tags(ResourceArn=resources[0]["TrainingJobArn"])["Tags"]
         self.assertEqual(len(tags), 0)
+
     ######################################################################################################
 
     def test_sagemaker_job_mark_for_op(self):
-        session_factory = self.replay_flight_data(
+        session_factory = self.record_flight_data(
             "test_sagemaker_job_mark_for_op"
         )
         p = self.load_policy(
@@ -460,9 +461,16 @@ class TestSagemakerJob(BaseTest):
                 "filters": [
                     {
                         "type": "value",
-                        "key": "ProductionVariants[].InstanceType",
-                        "value": "ml.m4.xlarge",
-                        "op": "contains",
+                        "key": "STATUS",
+                        "value": "Completed",
+                        "op": "equal",
+                    },
+                    {
+                        "type": "value",
+                        "key": "STATUS",
+                        "value": "Stopped",
+                        "op": "equal",
+                    
                     }
                 ],
                 "actions": [
@@ -479,17 +487,17 @@ class TestSagemakerJob(BaseTest):
         resources = p.run()
         self.assertEqual(len(resources), 1)
         client = session_factory(region="us-east-1").client("sagemaker")
-        tags = client.list_tags(ResourceArn=resources[0]["EndpointConfigArn"])["Tags"]
+        tags = client.list_tags(ResourceArn=resources[0]["ModelArn"])["Tags"]
         self.assertTrue(tags[0], "custodian_cleanup")
 
-    def test_sagemaker_endpoint_config_marked_for_op(self):
-        session_factory = self.replay_flight_data(
-            "test_sagemaker_endpoint_config_marked_for_op"
+    def test_sagemaker_job_marked_for_op(self):
+        session_factory = self.record_flight_data(
+            "test_sagemaker_job_marked_for_op"
         )
         p = self.load_policy(
             {
-                "name": "marked-failed-endpoint-config-delete",
-                "resource": "sagemaker-endpoint-config",
+                "name": "marked-for-op-delete",
+                "resource": "sagemaker-job",
                 "filters": [
                     {
                         "type": "marked-for-op",
