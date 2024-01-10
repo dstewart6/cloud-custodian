@@ -461,17 +461,10 @@ class TestSagemakerJob(BaseTest):
                 "filters": [
                     {
                         "type": "value",
-                        "key": "STATUS",
+                        "key": "TrainingJobStatus",
                         "value": "Completed",
                         "op": "equal",
                     },
-                    {
-                        "type": "value",
-                        "key": "STATUS",
-                        "value": "Stopped",
-                        "op": "equal",
-                    
-                    }
                 ],
                 "actions": [
                     {
@@ -487,7 +480,7 @@ class TestSagemakerJob(BaseTest):
         resources = p.run()
         self.assertEqual(len(resources), 1)
         client = session_factory(region="us-east-1").client("sagemaker")
-        tags = client.list_tags(ResourceArn=resources[0]["ModelArn"])["Tags"]
+        tags = client.list_tags(ResourceArn=resources[0]["TrainingJobArn"])["Tags"]
         self.assertTrue(tags[0], "custodian_cleanup")
 
     def test_sagemaker_job_marked_for_op(self):
