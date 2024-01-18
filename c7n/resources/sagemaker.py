@@ -411,23 +411,6 @@ class RemoveTagNotebookInstance(RemoveTag):
         for r in resources:
             client.delete_tags(ResourceArn=r[self.id_key], TagKeys=keys)
 
-###########################################################################################
-@SagemakerJob.action_registry.register('mark-for-op', TagDelayedAction)
-@SagemakerJob.filter_registry.register('marked-for-op', TagActionFilter)
-class MarkForOp(TagDelayedAction):
-    """Action to create a delayed action on aws.sagemaker-job to start at a later date
-
-    .. code-block:: yaml
-
-        policies:
-            - name: mark-for-delete
-              resource: sagemaker-job
-              actions:
-                - type: mark-for-op
-                  op: tag
-                  days: 1
-    """
-###########################################################################################
 
 @SagemakerEndpoint.action_registry.register('mark-for-op')
 @SagemakerEndpointConfig.action_registry.register('mark-for-op')
